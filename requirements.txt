@@ -1,0 +1,6 @@
+streamlit
+mysql-connector-python
+pymongo
+faker
+bcrypt
+pandas

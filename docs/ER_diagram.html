@@ -1,0 +1,349 @@
+<title>MedTrack ER Diagram</title>
+<style>
+/* Layout concept: four-column schema map — Doctor→Prescription→Dose chain (A),
+   Patient/Nurse-Assignment (B), Medicine/Interaction (C), Nurse→SOS→Task chain (D) —
+   relationship lines color-coded by the role/entity they originate from. */
+:root {
+  --bg: #faf8f4;
+  --surface: #ffffff;
+  --fg: #22201c;
+  --muted: #6b6659;
+  --border: #ddd6c7;
+  --accent-doctor: #2a6f97;
+  --accent-patient: #1f8a70;
+  --accent-nurse: #b5792a;
+  --accent-medicine: #7b5ea7;
+  --accent-core: #c0392b;
+  --pk: #8a5a00;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171511;
+    --surface: #211e19;
+    --fg: #ede8dd;
+    --muted: #a39d8c;
+    --border: #3a3527;
+    --accent-doctor: #6fb3dd;
+    --accent-patient: #5fcba8;
+    --accent-nurse: #e0a855;
+    --accent-medicine: #b79ae0;
+    --accent-core: #e4756a;
+    --pk: #e0b24d;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171511;
+  --surface: #211e19;
+  --fg: #ede8dd;
+  --muted: #a39d8c;
+  --border: #3a3527;
+  --accent-doctor: #6fb3dd;
+  --accent-patient: #5fcba8;
+  --accent-nurse: #e0a855;
+  --accent-medicine: #b79ae0;
+  --accent-core: #e4756a;
+  --pk: #e0b24d;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Libre Franklin", system-ui, sans-serif;
+  padding-inline: 20px;
+  padding-block: 28px;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(1.6rem, 4vw, 2.3rem);
+  font-weight: 600;
+  margin: 0 0 4px;
+  text-wrap: balance;
+}
+.subtitle { color: var(--muted); font-size: 0.95rem; margin: 0 0 22px; }
+.mono { font-family: "IBM Plex Mono", "SFMono-Regular", monospace; }
+
+.diagram-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  overflow-x: auto;
+}
+svg { width: 100%; max-width: 100%; height: auto; display: block; }
+
+.entity-box { fill: var(--surface); stroke: var(--border); stroke-width: 1.3; }
+.entity-header { fill: var(--fg); opacity: 0.06; }
+.entity-header-sq { fill: var(--fg); opacity: 0; }
+.entity-title {
+  font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 13px; fill: var(--fg);
+}
+text.attr, text.attr-pk, text.attr-fk {
+  font-family: "IBM Plex Mono", monospace; font-size: 11.5px; fill: var(--muted);
+}
+text.attr-pk { fill: var(--pk); font-weight: 600; }
+text.attr-fk { fill: var(--fg); }
+.attr-flag { fill: var(--muted); font-size: 10.5px; }
+
+.rel { fill: none; stroke-width: 1.6; opacity: 0.75; }
+.rel-label { font-family: "IBM Plex Mono", monospace; font-size: 9.5px; opacity: 0.85; }
+.rel-doctor, .rel-doctor-text { stroke: var(--accent-doctor); fill: var(--accent-doctor); }
+.rel-patient, .rel-patient-text { stroke: var(--accent-patient); fill: var(--accent-patient); }
+.rel-nurse, .rel-nurse-text { stroke: var(--accent-nurse); fill: var(--accent-nurse); }
+.rel-medicine, .rel-medicine-text { stroke: var(--accent-medicine); fill: var(--accent-medicine); }
+.rel-core, .rel-core-text { stroke: var(--accent-core); fill: var(--accent-core); stroke-width: 2.1; opacity: 0.9; }
+
+figcaption { color: var(--muted); font-size: 0.85rem; margin-top: 10px; }
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: 14px 22px;
+  margin: 16px 0 28px; font-size: 0.85rem; color: var(--muted);
+}
+.legend span.sw {
+  display: inline-block; width: 14px; height: 3px; border-radius: 2px;
+  margin-right: 6px; vertical-align: middle;
+}
+
+h2 {
+  font-family: "Fraunces", Georgia, serif; font-size: 1.25rem; font-weight: 600;
+  margin: 34px 0 10px; text-wrap: balance;
+}
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 640px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+th {
+  font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--muted); background: var(--surface);
+}
+td { vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+.card-notch { color: var(--muted); font-size: 0.82rem; margin: 6px 0 0; }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=Libre+Franklin:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<h1>MedTrack — Entity-Relationship Diagram</h1>
+<p class="subtitle">Relational schema (MySQL) for the DCDS Lab miniproject — 10 tables across the patient, nurse, and doctor roles.</p>
+
+<div class="legend">
+  <span><span class="sw" style="background:var(--accent-doctor)"></span>from doctors</span>
+  <span><span class="sw" style="background:var(--accent-patient)"></span>from patients</span>
+  <span><span class="sw" style="background:var(--accent-nurse)"></span>from nurses</span>
+  <span><span class="sw" style="background:var(--accent-medicine)"></span>from medicines</span>
+  <span><span class="sw" style="background:var(--accent-core)"></span>core lifecycle chain</span>
+</div>
+
+<figure class="diagram-wrap">
+<svg viewBox="0 0 1220 826" role="img" aria-label="MedTrack entity-relationship diagram showing patients, doctors, nurses, prescriptions, dose logs, medicines, drug interactions, SOS complaints, and tasks, with their keys and relationships">
+<defs>
+
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="context-stroke"></path>
+  </marker>
+
+</defs>
+<path d="M 280.0 111.0 Q 310.0 131.0 340.0 151.0" class="rel rel-doctor" marker-end="url(#arrow)"></path>
+<text x="310.0" y="125.0" class="rel-label rel-doctor-text" text-anchor="middle">doctor_id · 1:N</text>
+<path d="M 940.0 101.0 Q 760.0 232.0 580.0 363.0" class="rel rel-nurse" marker-end="url(#arrow)"></path>
+<text x="760.0" y="226.0" class="rel-label rel-nurse-text" text-anchor="middle">nurse_id · 1:N</text>
+<path d="M 460.0 262.0 Q 460.0 282.0 460.0 302.0" class="rel rel-patient" marker-end="url(#arrow)"></path>
+<text x="460.0" y="276.0" class="rel-label rel-patient-text" text-anchor="middle">patient_id (UQ) · 1:1</text>
+<path d="M 160.0 182.0 Q 160.0 202.0 160.0 222.0" class="rel rel-doctor" marker-end="url(#arrow)"></path>
+<text x="160.0" y="196.0" class="rel-label rel-doctor-text" text-anchor="middle">doctor_id · 1:N</text>
+<path d="M 340.0 151.0 Q 310.0 217.0 280.0 343.0" class="rel rel-patient" marker-end="url(#arrow)"></path>
+<text x="310.0" y="211.0" class="rel-label rel-patient-text" text-anchor="middle">patient_id · 1:N</text>
+<path d="M 640.0 91.0 Q 460.0 247.0 280.0 343.0" class="rel rel-medicine" marker-end="url(#arrow)"></path>
+<text x="460.0" y="241.0" class="rel-label rel-medicine-text" text-anchor="middle">medicine_id · 1:N</text>
+<path d="M 160.0 464.0 Q 160.0 484.0 160.0 504.0" class="rel rel-core" marker-end="url(#arrow)"></path>
+<text x="160.0" y="478.0" class="rel-label rel-core-text" text-anchor="middle">prescription_id · 1:N</text>
+<path d="M 712.0 40.0 Q 712.0 91.0 712.0 182.0" class="rel rel-medicine" marker-end="url(#arrow)"></path>
+<text x="712.0" y="85.0" class="rel-label rel-medicine-text" text-anchor="middle">medicine_id_a · 1:N</text>
+<path d="M 808.0 40.0 Q 808.0 131.0 808.0 182.0" class="rel rel-medicine" marker-end="url(#arrow)"></path>
+<text x="808.0" y="125.0" class="rel-label rel-medicine-text" text-anchor="middle">medicine_id_b · 1:N</text>
+<path d="M 1060.0 162.0 Q 1060.0 182.0 1060.0 202.0" class="rel rel-nurse" marker-end="url(#arrow)"></path>
+<text x="1060.0" y="176.0" class="rel-label rel-nurse-text" text-anchor="middle">nurse_id · 1:N</text>
+<path d="M 580.0 151.0 Q 760.0 212.0 940.0 353.0" class="rel rel-patient" marker-end="url(#arrow)"></path>
+<text x="760.0" y="206.0" class="rel-label rel-patient-text" text-anchor="middle">patient_id · 1:N</text>
+<path d="M 280.0 111.0 Q 610.0 292.0 940.0 353.0" class="rel rel-doctor" marker-end="url(#arrow)"></path>
+<text x="610.0" y="286.0" class="rel-label rel-doctor-text" text-anchor="middle">doctor_id · 1:N</text>
+<path d="M 1060.0 504.0 Q 1060.0 524.0 1060.0 544.0" class="rel rel-core" marker-end="url(#arrow)"></path>
+<text x="1060.0" y="518.0" class="rel-label rel-core-text" text-anchor="middle">sos_id (nullable) · 1:0..N</text>
+<path d="M 580.0 151.0 Q 760.0 448.0 940.0 665.0" class="rel rel-patient" marker-end="url(#arrow)"></path>
+<text x="760.0" y="442.0" class="rel-label rel-patient-text" text-anchor="middle">patient_id · 1:N</text>
+<path d="M 1180.0 101.0 Q 1060.0 323.0 940.0 665.0" class="rel rel-nurse" marker-end="url(#arrow)"></path>
+<text x="1060.0" y="317.0" class="rel-label rel-nurse-text" text-anchor="middle">nurse_id · 1:N</text>
+<path d="M 280.0 111.0 Q 610.0 368.0 940.0 665.0" class="rel rel-doctor" marker-end="url(#arrow)"></path>
+<text x="610.0" y="362.0" class="rel-label rel-doctor-text" text-anchor="middle">assigned_by_doctor_id · 1:N</text>
+<g class="entity">
+<rect x="40" y="40" width="240" height="142" rx="8" class="entity-box"></rect>
+<rect x="40" y="40" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="40" y="64" width="240" height="8" class="entity-header-sq"></rect>
+<text x="52" y="61" class="entity-title">doctors</text>
+<text x="52" y="86" class="attr-pk">doctor_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="52" y="106" class="attr">name<tspan class="attr-flag"></tspan></text>
+<text x="52" y="126" class="attr">specialization<tspan class="attr-flag"></tspan></text>
+<text x="52" y="146" class="attr">email<tspan class="attr-flag"> (UQ)</tspan></text>
+<text x="52" y="166" class="attr">password_hash<tspan class="attr-flag"></tspan></text>
+</g>
+<g class="entity">
+<rect x="40" y="222" width="240" height="242" rx="8" class="entity-box"></rect>
+<rect x="40" y="222" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="40" y="246" width="240" height="8" class="entity-header-sq"></rect>
+<text x="52" y="243" class="entity-title">prescriptions</text>
+<text x="52" y="268" class="attr-pk">prescription_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="52" y="288" class="attr-fk">patient_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="52" y="308" class="attr-fk">doctor_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="52" y="328" class="attr-fk">medicine_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="52" y="348" class="attr">dosage<tspan class="attr-flag"></tspan></text>
+<text x="52" y="368" class="attr">frequency<tspan class="attr-flag"></tspan></text>
+<text x="52" y="388" class="attr">quantity<tspan class="attr-flag"></tspan></text>
+<text x="52" y="408" class="attr">remaining_qty<tspan class="attr-flag"></tspan></text>
+<text x="52" y="428" class="attr">start_date<tspan class="attr-flag"></tspan></text>
+<text x="52" y="448" class="attr">end_date<tspan class="attr-flag"></tspan></text>
+</g>
+<g class="entity">
+<rect x="40" y="504" width="240" height="142" rx="8" class="entity-box"></rect>
+<rect x="40" y="504" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="40" y="528" width="240" height="8" class="entity-header-sq"></rect>
+<text x="52" y="525" class="entity-title">dose_log</text>
+<text x="52" y="550" class="attr-pk">dose_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="52" y="570" class="attr-fk">prescription_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="52" y="590" class="attr">scheduled_time<tspan class="attr-flag"></tspan></text>
+<text x="52" y="610" class="attr">actual_time<tspan class="attr-flag"></tspan></text>
+<text x="52" y="630" class="attr">status<tspan class="attr-flag"></tspan></text>
+</g>
+<g class="entity">
+<rect x="340" y="40" width="240" height="222" rx="8" class="entity-box"></rect>
+<rect x="340" y="40" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="340" y="64" width="240" height="8" class="entity-header-sq"></rect>
+<text x="352" y="61" class="entity-title">patients</text>
+<text x="352" y="86" class="attr-pk">patient_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="352" y="106" class="attr">name<tspan class="attr-flag"></tspan></text>
+<text x="352" y="126" class="attr">age<tspan class="attr-flag"></tspan></text>
+<text x="352" y="146" class="attr">gender<tspan class="attr-flag"></tspan></text>
+<text x="352" y="166" class="attr">weight_kg<tspan class="attr-flag"></tspan></text>
+<text x="352" y="186" class="attr">email<tspan class="attr-flag"> (UQ)</tspan></text>
+<text x="352" y="206" class="attr">password_hash<tspan class="attr-flag"></tspan></text>
+<text x="352" y="226" class="attr">water_target_ml<tspan class="attr-flag"></tspan></text>
+<text x="352" y="246" class="attr-fk">doctor_id<tspan class="attr-flag"> (FK)</tspan></text>
+</g>
+<g class="entity">
+<rect x="340" y="302" width="240" height="122" rx="8" class="entity-box"></rect>
+<rect x="340" y="302" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="340" y="326" width="240" height="8" class="entity-header-sq"></rect>
+<text x="352" y="323" class="entity-title">nurse_assignments</text>
+<text x="352" y="348" class="attr-pk">assignment_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="352" y="368" class="attr-fk">patient_id<tspan class="attr-flag"> (FK,UQ)</tspan></text>
+<text x="352" y="388" class="attr-fk">nurse_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="352" y="408" class="attr">assigned_date<tspan class="attr-flag"></tspan></text>
+</g>
+<g class="entity">
+<rect x="640" y="40" width="240" height="102" rx="8" class="entity-box"></rect>
+<rect x="640" y="40" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="640" y="64" width="240" height="8" class="entity-header-sq"></rect>
+<text x="652" y="61" class="entity-title">medicines</text>
+<text x="652" y="86" class="attr-pk">medicine_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="652" y="106" class="attr">name<tspan class="attr-flag"> (UQ)</tspan></text>
+<text x="652" y="126" class="attr">unit<tspan class="attr-flag"></tspan></text>
+</g>
+<g class="entity">
+<rect x="640" y="182" width="240" height="142" rx="8" class="entity-box"></rect>
+<rect x="640" y="182" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="640" y="206" width="240" height="8" class="entity-header-sq"></rect>
+<text x="652" y="203" class="entity-title">drug_interactions</text>
+<text x="652" y="228" class="attr-pk">interaction_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="652" y="248" class="attr-fk">medicine_id_a<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="652" y="268" class="attr-fk">medicine_id_b<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="652" y="288" class="attr">severity<tspan class="attr-flag"></tspan></text>
+<text x="652" y="308" class="attr">description<tspan class="attr-flag"></tspan></text>
+</g>
+<g class="entity">
+<rect x="940" y="40" width="240" height="122" rx="8" class="entity-box"></rect>
+<rect x="940" y="40" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="940" y="64" width="240" height="8" class="entity-header-sq"></rect>
+<text x="952" y="61" class="entity-title">nurses</text>
+<text x="952" y="86" class="attr-pk">nurse_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="952" y="106" class="attr">name<tspan class="attr-flag"></tspan></text>
+<text x="952" y="126" class="attr">email<tspan class="attr-flag"> (UQ)</tspan></text>
+<text x="952" y="146" class="attr">password_hash<tspan class="attr-flag"></tspan></text>
+</g>
+<g class="entity">
+<rect x="940" y="202" width="240" height="302" rx="8" class="entity-box"></rect>
+<rect x="940" y="202" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="940" y="226" width="240" height="8" class="entity-header-sq"></rect>
+<text x="952" y="223" class="entity-title">sos_complaints</text>
+<text x="952" y="248" class="attr-pk">sos_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="952" y="268" class="attr-fk">patient_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="952" y="288" class="attr-fk">nurse_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="952" y="308" class="attr-fk">doctor_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="952" y="328" class="attr">description<tspan class="attr-flag"></tspan></text>
+<text x="952" y="348" class="attr">severity<tspan class="attr-flag"></tspan></text>
+<text x="952" y="368" class="attr">status<tspan class="attr-flag"></tspan></text>
+<text x="952" y="388" class="attr">raised_at<tspan class="attr-flag"></tspan></text>
+<text x="952" y="408" class="attr">nurse_reviewed_at<tspan class="attr-flag"></tspan></text>
+<text x="952" y="428" class="attr">escalated_at<tspan class="attr-flag"></tspan></text>
+<text x="952" y="448" class="attr">doctor_reviewed_at<tspan class="attr-flag"></tspan></text>
+<text x="952" y="468" class="attr">resolved_at<tspan class="attr-flag"></tspan></text>
+<text x="952" y="488" class="attr">resolution_notes<tspan class="attr-flag"></tspan></text>
+</g>
+<g class="entity">
+<rect x="940" y="544" width="240" height="242" rx="8" class="entity-box"></rect>
+<rect x="940" y="544" width="240" height="32" rx="8" class="entity-header"></rect>
+<rect x="940" y="568" width="240" height="8" class="entity-header-sq"></rect>
+<text x="952" y="565" class="entity-title">tasks</text>
+<text x="952" y="590" class="attr-pk">task_id<tspan class="attr-flag"> (PK)</tspan></text>
+<text x="952" y="610" class="attr-fk">sos_id<tspan class="attr-flag"> (FK,NULL)</tspan></text>
+<text x="952" y="630" class="attr-fk">patient_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="952" y="650" class="attr-fk">nurse_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="952" y="670" class="attr-fk">assigned_by_doctor_id<tspan class="attr-flag"> (FK)</tspan></text>
+<text x="952" y="690" class="attr">task_type<tspan class="attr-flag"></tspan></text>
+<text x="952" y="710" class="attr">status<tspan class="attr-flag"></tspan></text>
+<text x="952" y="730" class="attr">notes<tspan class="attr-flag"></tspan></text>
+<text x="952" y="750" class="attr">created_at<tspan class="attr-flag"></tspan></text>
+<text x="952" y="770" class="attr">completed_at<tspan class="attr-flag"></tspan></text>
+</g>
+</svg>
+<figcaption>Each box lists a table's columns — amber rows are primary keys, bold rows are foreign keys. Lines are colored by the entity they originate from; arrows point toward the "many" side of each 1:N relationship.</figcaption>
+</figure>
+
+<h2>Relationship Reference</h2>
+<p class="card-notch">Every foreign-key relationship in the schema, for cases the diagram's color-coding compresses.</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Parent (1)</th><th>Child (N)</th><th>Via column</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td class="mono">doctors</td><td class="mono">patients</td><td class="mono">doctor_id</td><td>Each patient has one primary doctor; a doctor has many patients.</td></tr>
+<tr><td class="mono">nurses</td><td class="mono">nurse_assignments</td><td class="mono">nurse_id</td><td>A nurse holds a case-load of multiple assignments.</td></tr>
+<tr><td class="mono">patients</td><td class="mono">nurse_assignments</td><td class="mono">patient_id (UQ)</td><td>Each patient has exactly one active nurse assignment.</td></tr>
+<tr><td class="mono">patients</td><td class="mono">prescriptions</td><td class="mono">patient_id</td><td>A patient can hold several prescriptions at once.</td></tr>
+<tr><td class="mono">doctors</td><td class="mono">prescriptions</td><td class="mono">doctor_id</td><td>The prescribing doctor for each prescription.</td></tr>
+<tr><td class="mono">medicines</td><td class="mono">prescriptions</td><td class="mono">medicine_id</td><td>Which medicine a prescription is for.</td></tr>
+<tr><td class="mono">medicines</td><td class="mono">drug_interactions</td><td class="mono">medicine_id_a, medicine_id_b</td><td>Self-referencing on medicines: each row is one known interacting pair.</td></tr>
+<tr><td class="mono">prescriptions</td><td class="mono">dose_log</td><td class="mono">prescription_id</td><td>Every scheduled dose generated from a prescription.</td></tr>
+<tr><td class="mono">patients</td><td class="mono">sos_complaints</td><td class="mono">patient_id</td><td>The patient who raised the SOS/complaint.</td></tr>
+<tr><td class="mono">nurses</td><td class="mono">sos_complaints</td><td class="mono">nurse_id</td><td>The assigned nurse who first triages the case.</td></tr>
+<tr><td class="mono">doctors</td><td class="mono">sos_complaints</td><td class="mono">doctor_id</td><td>The doctor notified in parallel, for cases that get escalated.</td></tr>
+<tr><td class="mono">sos_complaints</td><td class="mono">tasks</td><td class="mono">sos_id (nullable)</td><td>A task can originate from an SOS, or be created independently.</td></tr>
+<tr><td class="mono">patients</td><td class="mono">tasks</td><td class="mono">patient_id</td><td>Which patient the task (delivery/injection/procedure) is for.</td></tr>
+<tr><td class="mono">nurses</td><td class="mono">tasks</td><td class="mono">nurse_id</td><td>The nurse responsible for executing the task.</td></tr>
+<tr><td class="mono">doctors</td><td class="mono">tasks</td><td class="mono">assigned_by_doctor_id</td><td>The doctor who assigned the task after reviewing an escalation.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Table Legend</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Mark</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td class="mono" style="color:var(--pk);font-weight:600">PK</td><td>Primary key of the table.</td></tr>
+<tr><td class="mono" style="font-weight:600">FK</td><td>Foreign key referencing another table's primary key.</td></tr>
+<tr><td class="mono">UQ</td><td>Column has a unique constraint.</td></tr>
+<tr><td class="mono">NULL</td><td>Foreign key is nullable (e.g. a task not tied to any SOS).</td></tr>
+</tbody>
+</table>
+</div>
